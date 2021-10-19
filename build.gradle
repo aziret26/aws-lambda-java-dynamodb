@@ -1,0 +1,48 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.home.practice'
+version = '1.0-SNAPSHOT'
+
+sourceCompatibility = 11
+targetCompatibility = 11
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // AWS
+    implementation group: 'com.amazonaws.serverless', name: 'aws-serverless-java-container-core', version: '1.4'
+    implementation group: 'com.amazonaws', name: 'aws-lambda-java-core', version: '1.2.0'
+    implementation group: 'com.amazonaws', name: 'aws-java-sdk-dynamodb', version: '1.11.759'
+    implementation group: 'com.amazonaws', name: 'aws-lambda-java-log4j2', version: '1.1.0'
+
+    // Utils
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.10.0'
+    implementation group: 'commons-io', name: 'commons-io', version: '2.6'
+
+    // https://mvnrepository.com/artifact/org.projectlombok/lombok
+    compileOnly 'org.projectlombok:lombok:1.18.22'
+    annotationProcessor 'org.projectlombok:lombok:1.18.22'
+
+/*
+    // Test
+    testImplementation group: 'junit', name: 'junit', version: '4.12'
+    testImplementation group: 'org.mockito', name: 'mockito-core', version: '3.3.3'
+    testImplementation group: 'org.powermock', name: 'powermock-api-mockito2', version: '2.0.6'
+    testImplementation group: 'org.powermock', name: 'powermock-module-junit4', version: '2.0.6'
+    testImplementation group: 'org.testcontainers', name: 'localstack', version: '1.13.0'
+    testImplementation group: 'cloud.localstack', name: 'localstack-utils', version: '0.2.1'
+*/
+
+}
+
+task buildZip(type: Zip) {
+    from compileJava
+    from processResources
+    into('lib') {
+        from configurations.runtimeClasspath
+    }
+}
