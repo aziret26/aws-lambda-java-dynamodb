@@ -5,10 +5,9 @@ import com.amazonaws.services.dynamodbv2.document.spec.UpdateItemSpec;
 import com.amazonaws.services.dynamodbv2.document.utils.NameMap;
 import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import com.amazonaws.services.dynamodbv2.model.ReturnValue;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.home.practice.model.AddProductRequest;
-import com.home.practice.model.Product;
+import com.home.practice.model.ProductResponse;
 import com.home.practice.model.UpdateProductRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,7 +26,7 @@ public class DbService {
         this.dynamoDB = dynamoDB;
     }
 
-    public Product putProductRequest(AddProductRequest request) {
+    public ProductResponse putProductRequest(AddProductRequest request) {
         UUID uuid = UUID.randomUUID();
         String uuidAsString = uuid.toString();
 
@@ -37,24 +36,30 @@ public class DbService {
                 .withDouble("price", request.getPrice())
                 .withString("imageUrl", request.getImageUrl());
 
-        PutItemOutcome outcome = dynamoDB
+        dynamoDB
                 .getTable(PRODUCTS_TABLE)
                 .putItem(item);
 
         return toProduct(item);
     }
 
-    public Product update(
+    public ProductResponse update(
             UpdateProductRequest request
     ) {
         UpdateItemSpec updateItemSpec = new UpdateItemSpec()
-                .withPrimaryKey(new PrimaryKey("id", request.getId()))
-                .withUpdateExpression("set productName=#productName, price=:price, imageUrl=#imageUrl")
-                .withNameMap(
-                        new NameMap()
-                                .with("#productName", request.getName())
-                                .with("#imageUrl", request.getImageUrl())
-                ).withValueMap(new ValueMap().withNumber(":price", request.getPrice()))
+                .withPrimaryKey("id", request.getId())
+                .withUpdateExpression("set #productName = :productName, #price = :price, #imageUrl = :imageUrl")
+                .withNameMap(new NameMap()
+                        .with("#productName", "productName")
+                        .with("#price", "price")
+                        .with("#imageUrl", "imageUrl")
+                )
+                .withValueMap(
+                        new ValueMap()
+                                .withNumber(":price", request.getPrice())
+                                .withString(":productName", request.getName())
+                                .withString(":imageUrl", request.getImageUrl())
+                )
                 .withReturnValues(ReturnValue.UPDATED_NEW);
 
 
@@ -65,11 +70,11 @@ public class DbService {
         return toProduct(outcome.getItem());
     }
 
-    private Product toProduct(Item item) {
+    private ProductResponse toProduct(Item item) {
         LOG.info("converting: ");
         LOG.info(item.asMap());
         LOG.info("converted");
-        return Product
+        return ProductResponse
                 .builder()
                 .id(item.getString("id"))
                 .name(item.getString("productName"))
